@@ -1,0 +1,108 @@
+
+
+import csv
+import numpy as np
+
+
+Trips=[]
+
+maxreal=0
+maximag=0
+maxang=0
+minang=0
+maxabs=0
+for driver in range(1,2):  # number of drivers is 3612
+    for trip in range(1,201): #number of trips is 2oo
+
+       adress="/Users/amir/Documents/Telemetric data/drivers/"+`driver`+"/"+`trip`+".csv"
+       with open(adress, 'rb') as f:
+        reader = csv.reader(f)
+        mylist=list(reader)
+ #       cart_data = np.array(mylist[1:len(mylist)],dtype=float)
+        data = np.array(mylist[1:len(mylist)],dtype=float)
+        comp_data= data[:,0]+1j*data[:,1]
+        
+#        rteta_data=([[0,0]])
+        Delta=np.zeros(len(comp_data)-1,dtype=complex)
+
+#########  Generate 10 random score functions
+        
+
+        for t in range(1,len(data)):
+##            nextr=np.sqrt((cart_data[t][1]-cart_data[t-1][1])**2+(cart_data[t][0]-cart_data[t-1][0])**2)
+#            nextr=np.abs(comp_data[t]-comp_data[t-1])
+#            nextteta=np.angle(comp_data[t]-comp_data[t-1])-
+#            rteta_data.append([nextr,nextteta])    # NOW WE CONVERTed DATA INTO R,TETA FROMAT TO GET RID OF ROTATION
+             Delta[t-1]=comp_data[t]-comp_data[t-1]
+        maxang=max(np.angle(Delta))
+        minang=min(np.angle(Delta))
+        maxabs=max(np.abs(Delta))
+        maxreal=max([max(abs(Delta.real)),maxreal])
+        if maxreal>=50:
+             maxreal=50
+             ##print maxreal,"trip=",trip,t
+        maximag=max([max(abs(Delta.imag)),maximag])
+        if maximag>=50:
+             maximag=50
+        Trips.append(Delta)
+        Trips.append([])
+##    print maxreal,maximag
+#### Temporariy we put     
+    ### The dimension of the state space is
+    spdim=(np.ceil(maxreal)*2+1)*(np.ceil(maximag)*2+1)
+
+    angst=40
+    abst=50
+    spdim=abst*angst
+    ### we calculate the joint score function since we assume a Markov chanin model
+    ### We creat a matrix of the size spdim*spdim. To access the first point x in the fist state, we have
+    ### x.real*maxreal+x.image. Ofcourse if x.real and x.image are not integers we use ceil)
+
+    
+    RandScor1=np.random.rand(spdim,spdim)*1000
+##    RandScor2=np.random.rand(spdim,spdim)
+##    RandScor3=np.random.rand(spdim,spdim)
+##    RandScor4=np.random.rand(spdim,spdim)
+##    RandScor5=np.random.rand(spdim,spdim)
+##    RandScor6=np.random.rand(spdim,spdim)
+##    RandScor7=np.random.rand(spdim,spdim)
+##    RandScor8=np.random.rand(spdim,spdim)
+##    RandScor9=np.random.rand(spdim,spdim)
+##    RandScor10=np.random.rand(spdim,spdim)
+##    
+
+
+        ## Quanitzer   ###############
+
+    trip=0
+    y=0                     #we assume that initial state is 0;
+    s1=np.zeros(200)
+##    s2=np.zeros(200)
+##    s3=np.zeros(200)
+##    s4=np.zeros(200)
+##    s5=np.zeros(200)
+##    s6=np.zeros(200)
+##    s7=np.zeros(200)
+##    s8=np.zeros(200)
+##    s9=np.zeros(200)
+##    s10=np.zeros(200)
+##    
+    for i in Trips:
+        if i!=[]:
+  #          trip-=trip
+        
+            for x in i:
+                lenx=len(i)-1
+                if np.abs(x)>=50:
+                    x=y
+                
+                s1[trip]+=RandScor1[np.floor(np.abs(x)+np.floor(np.angle(x)/(2*np.pi)*angst)),np.floor(np.abs(y)+np.floor(np.angle(y)/(2*np.pi)*angst))]
+
+                y=x         # we store y as x.previous
+            s1[trip]=s1[trip]/lenx
+            trip+=1
+    listofoutliers=np.argwhere((s1>np.mean(s1)+2*np.std(s1))|(s1<np.mean(s1)-2*np.std(s1)))
+    print listofoutliers
+                
+                
+
